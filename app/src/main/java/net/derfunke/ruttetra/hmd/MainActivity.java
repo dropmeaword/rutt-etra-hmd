@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.util.Log;
 import com.google.vrtoolkit.cardboard.*;
 
+import net.derfunke.ruttetra.hmd.shader.Shader;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -66,6 +68,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private CardboardOverlayView mOverlayView;
 
 
+    Shader shader;
+
 	private CardboardView cardboardView;
 	private SurfaceTexture surface;
 	private float[] mView;
@@ -113,28 +117,28 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
      * @param type The type of shader we will be creating.
      * @return
      */
-    private int loadGLShader(int type, String code) {
-        int shader = GLES20.glCreateShader(type);
-        GLES20.glShaderSource(shader, code);
-        GLES20.glCompileShader(shader);
-
-        // Get the compilation status.
-        final int[] compileStatus = new int[1];
-        GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compileStatus, 0);
-
-        // If the compilation failed, delete the shader.
-        if (compileStatus[0] == 0) {
-            Log.e(TAG, "Error compiling shader: " + GLES20.glGetShaderInfoLog(shader));
-            GLES20.glDeleteShader(shader);
-            shader = 0;
-        }
-
-        if (shader == 0) {
-            throw new RuntimeException("Error creating shader.");
-        }
-
-        return shader;
-    }
+//    private int loadGLShader(int type, String code) {
+//        int shader = GLES20.glCreateShader(type);
+//        GLES20.glShaderSource(shader, code);
+//        GLES20.glCompileShader(shader);
+//
+//        // Get the compilation status.
+//        final int[] compileStatus = new int[1];
+//        GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compileStatus, 0);
+//
+//        // If the compilation failed, delete the shader.
+//        if (compileStatus[0] == 0) {
+//            Log.e(TAG, "Error compiling shader: " + GLES20.glGetShaderInfoLog(shader));
+//            GLES20.glDeleteShader(shader);
+//            shader = 0;
+//        }
+//
+//        if (shader == 0) {
+//            throw new RuntimeException("Error creating shader.");
+//        }
+//
+//        return shader;
+//    }
 
     /**
      * Checks if we've had an error inside of OpenGL ES, and if so what that error is.
@@ -162,12 +166,14 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         cardboardView.setRenderer(this);
         setCardboardView(cardboardView);
 
+        shader = new Shader();
+
 //        mModelCube = new float[16];
         mCamera = new float[16];
         mView = new float[16];
 
         mOverlayView = (CardboardOverlayView)findViewById(R.id.overlay);
-        mOverlayView.presentText("This could be a useful HUD");
+        mOverlayView.presentText("HUND HUND HUND HUND HUND");
     }
 
     @Override
@@ -214,18 +220,19 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
         this.prepareRenderBuffers();
 
+        // load shader sources from resources and compile shader program
         String srcVertexShader = RawResourceReader.readRawTextResource(this, R.raw.base_vertex_shader);
         String srcFragmentShader = RawResourceReader.readRawTextResource(this, R.raw.base_fragment_shader);
 
-        Log.d(TAG, srcVertexShader);
+        shader.loadfromString(srcFragmentShader, srcVertexShader);
 
-        int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, srcVertexShader);
-        int fragmentShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, srcFragmentShader);
+//        int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, srcVertexShader);
+//        int fragmentShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, srcFragmentShader);
 
-        mProgram = GLES20.glCreateProgram();             // create empty OpenGL ES Program
-        GLES20.glAttachShader(mProgram, vertexShader);   // add the vertex shader to program
-        GLES20.glAttachShader(mProgram, fragmentShader); // add the fragment shader to program
-        GLES20.glLinkProgram(mProgram);
+//        mProgram = GLES20.glCreateProgram();             // create empty OpenGL ES Program
+//        GLES20.glAttachShader(mProgram, vertexShader);   // add the vertex shader to program
+//        GLES20.glAttachShader(mProgram, fragmentShader); // add the fragment shader to program
+//        GLES20.glLinkProgram(mProgram);
         
         texture = createTexture();
         startCamera(texture);
@@ -258,8 +265,12 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     @Override
     public void onDrawEye(EyeTransform transform) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        
-        GLES20.glUseProgram(mProgram);
+
+        shader.bind();
+
+        mProgram = shader.getGLId();
+
+//        GLES20.glUseProgram(mProgram);
 
         GLES20.glActiveTexture(GL_TEXTURE_EXTERNAL_OES);
         GLES20.glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture);
