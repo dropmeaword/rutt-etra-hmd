@@ -3,6 +3,8 @@ package net.derfunke.ruttetra.hmd.shader;
 import android.opengl.GLES20;
 import android.util.Log;
 
+import java.util.HashMap;
+
 public class Shader {
 
     private static final String TAG = "Shader";
@@ -13,6 +15,9 @@ public class Shader {
     int glidFragment;
 
     int glidProgram;
+
+    // HashMap for storing uniform/attribute handles.
+    private final HashMap<String, Integer> shaderLocationMap = new HashMap<String, Integer>();
 
     public Shader() {
     }
@@ -71,12 +76,55 @@ public class Shader {
     }
 
     public void unbind() {
+        // nothing
     }
 
+    /**
+     * Get id for given handle name. This method checks for both attribute and
+     * uniform handles.
+     *
+     * @param name
+     *            Name of handle.
+     * @return Id for given handle or -1 if none found.
+     */
+    public int getLocation(String name) {
+
+        // first look in our map
+        if (shaderLocationMap.containsKey(name)) {
+            return shaderLocationMap.get(name);
+        }
+
+        // otherwise query the GL stack
+        int handle = GLES20.glGetAttribLocation(glidProgram, name);
+        if (handle == -1) {
+            handle = GLES20.glGetUniformLocation(glidProgram, name);
+        }
+        if (handle == -1) {
+            // One should never leave log messages but am not going to follow
+            // this rule. This line comes handy if you see repeating 'not found'
+            // messages on LogCat - usually for typos otherwise annoying to
+            // spot from shader code.
+            Log.d("GlslShader", "Could not get attrib location for " + name);
+        } else {
+            shaderLocationMap.put(name, handle);
+        }
+
+        return handle;
+    }
+
+    // SHORT-HAND uniform/attrbute setters, if the one you are looking for is not implemented
+    // just use the int loc = shader.getLocation("name") and GLES20.glUniformXXX(loc, ...)
+
     public void set(String name, float v) {
+        GLES20.glUniform1f(getLocation(name), v);
+    }
+
+    public void set(String name, int v) {
+        GLES20.glUniform1f(getLocation(name), v);
     }
 
     public void set(String name, float a, float b, float c) {
+        GLES20.glUniform3f(getLocation(name), a, b, c);
     }
 }
 

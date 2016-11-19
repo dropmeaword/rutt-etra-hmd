@@ -266,29 +266,34 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     public void onDrawEye(EyeTransform transform) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
+        float eye = 1.0f * transform.getParams().getEye();
+        //Log.d("Main", "eye = "+eye);
+
         shader.bind();
 
-        mProgram = shader.getGLId();
+        shader.set("eye", eye);
 
-//        GLES20.glUseProgram(mProgram);
+        mProgram = shader.getGLId();
 
         GLES20.glActiveTexture(GL_TEXTURE_EXTERNAL_OES);
         GLES20.glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture);
 
-
+//        GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
+//        GLES20.glEnable(GLES20.GL_TEXTURE_2D);
+//        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, Reflection);
 
         mPositionHandle = GLES20.glGetAttribLocation(mProgram, "position");
         GLES20.glEnableVertexAttribArray(mPositionHandle);
         GLES20.glVertexAttribPointer(mPositionHandle, COORDS_PER_VERTEX, GLES20.GL_FLOAT,
-        		false,vertexStride, vertexBuffer);
+        		false, vertexStride, vertexBuffer);
         
 
         mTextureCoordHandle = GLES20.glGetAttribLocation(mProgram, "inputTextureCoordinate");
         GLES20.glEnableVertexAttribArray(mTextureCoordHandle);
         GLES20.glVertexAttribPointer(mTextureCoordHandle, COORDS_PER_VERTEX, GLES20.GL_FLOAT,
-        		false,vertexStride, textureVerticesBuffer);
+        		false, vertexStride, textureVerticesBuffer);
 
-        mColorHandle = GLES20.glGetAttribLocation(mProgram, "s_texture");
+        //mColorHandle = GLES20.glGetAttribLocation(mProgram, "s_texture");
 
 
 

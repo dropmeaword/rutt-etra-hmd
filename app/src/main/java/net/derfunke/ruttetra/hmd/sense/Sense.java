@@ -16,19 +16,19 @@ public class Sense {
     List<Sensor> sensors;
     HMDSensorEventListener listener;
 
-    Vector3 accel;
-    Vector3 linearaccel;
-    Vector3 rotation;
-    Vector3 orientation;
-    Vector3 gyro;
-    Vector3 magnet;
-    Vector3 gravity;
-    float lux;
-    float pressure; // mPh
-    float altitude; // metres
-    float proximity;  // 0 or 1
-    float humidity; // percent
-    float temperature; // in celsius
+    public Vector3 accel;
+    public Vector3 linearaccel;
+    public Vector3 rotation;
+    public Vector3 orientation;
+    public Vector3 gyro;
+    public Vector3 magnet;
+    public Vector3 gravity;
+    public float lux;
+    public float pressure; // mPh
+    public float altitude; // metres
+    public float proximity;  // 0 or 1
+    public float humidity; // percent
+    public float temperature; // in celsius
 
     void init(Context ctxt) {
         accel = new Vector3();
