@@ -5,9 +5,9 @@ import net.derfunke.ruttetra.hmd.sense.*;
 
 public class SensorPlayground extends SensorBaseLayer {
 
-    public SensorPlayground(Shader shdr) {
-        super(shdr);
-    }
+//    public SensorPlayground(Shader shdr) {
+//        super(shdr);
+//    }
 
     // /////////////////////////////////////////////////////////////////////////////
     // /////////////////////////////////////////////////////////////////////////////

@@ -9,15 +9,13 @@ import android.os.Bundle;
 import android.util.Log;
 import com.google.vrtoolkit.cardboard.*;
 
+import net.derfunke.ruttetra.hmd.sense.Sense;
 import net.derfunke.ruttetra.hmd.shader.Shader;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -45,9 +43,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     	 1.0f, 1.0f,   // 3. right - top
     };
     
-    
-
-    
     private short drawOrder[] =  {0, 2, 1, 1, 2, 3 }; // order to draw vertices
     private short drawOrder2[] = {2, 0, 3, 3, 0, 1}; // order to draw vertices
 
@@ -69,6 +64,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
 
     Shader shader;
+    Sense sense;
 
 	private CardboardView cardboardView;
 	private SurfaceTexture surface;
@@ -167,6 +163,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         setCardboardView(cardboardView);
 
         shader = new Shader();
+        sense  = new Sense(this);
 
 //        mModelCube = new float[16];
         mCamera = new float[16];
@@ -272,6 +269,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         shader.bind();
 
         shader.set("eye", eye);
+
+        //sense.update();
 
         mProgram = shader.getGLId();
 

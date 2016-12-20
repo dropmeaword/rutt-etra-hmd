@@ -1,23 +1,49 @@
 package net.derfunke.ruttetra.hmd.sense;
 
 import net.derfunke.ruttetra.hmd.shader.*;
+import net.derfunke.ruttetra.hmd.util.Vector3;
+
+import java.util.HashMap;
+import java.util.Map;
 
 abstract public class SensorBaseLayer {
 
-    Shader _shader;
+//    Shader _shader;
 
-    public SensorBaseLayer(Shader shader) {
-        this._shader = shader;
+    private HashMap<String, Object> attr;
+
+    public SensorBaseLayer() {
+//        this._shader = shader;
+        this.attr = new HashMap<String, Object>();
     }
 
 
     protected void set(String name, float a, float b, float c) {
-        this._shader.set(name, a, b, c);
+        //this._shader.set(name, a, b, c);
+        attr.put(name, new Vector3(a, b, c));
     }
 
     protected void set(String name, float a) {
-        this._shader.set(name, a);
+        //this._shader.set(name, a);
+        attr.put(name, new Float(a));
     }
+
+    public void update(Shader shader) {
+
+        for(Map.Entry<String, Object> entry : attr.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            if(value instanceof Vector3) {
+                Vector3 v = (Vector3)value;
+                shader.set(key, v.x, v.y, v.z);
+            } else if (value instanceof Float) {
+                Float f = (Float)value;
+                shader.set(key, f.floatValue());
+            }
+
+        } // for
+    } // update
 
 
     protected void v0(float a, float b, float c) {
