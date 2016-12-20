@@ -3,6 +3,7 @@ package net.derfunke.ruttetra.hmd.sandbox;
 import net.derfunke.ruttetra.hmd.shader.*;
 import net.derfunke.ruttetra.hmd.sense.*;
 
+
 public class SensorPlayground extends SensorBaseLayer {
 
     public SensorPlayground(Shader shdr) {
@@ -17,7 +18,9 @@ public class SensorPlayground extends SensorBaseLayer {
     // /////////////////////////////////////////////////////////////////////////////
 
     public void accelerometer(float a, float b, float c) {
-        v0( (a / 16000), (b / 16000), (c / 16000) );
+        // mOverlayView = (CardboardOverlayView)findViewById(R.id.overlay);
+        // mOverlayView.presentText(Float.toString(a));
+        v0( 1.f, (b / 16000), (c / 16000) );
     }
 
     public void gyroscope(float a, float b, float c) {

@@ -69,4 +69,5 @@ abstract public class SensorBaseLayer {
     abstract public void proximity(float val);
     abstract public void humidity(float val);
     abstract public void signalStrength(float val);
+
 }

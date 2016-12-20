@@ -10,4 +10,5 @@ public interface SensorLayer {
     public void proximity(float val);
     public void humidity(float val);
     public void signalStrength(float val);
+
 } // iface

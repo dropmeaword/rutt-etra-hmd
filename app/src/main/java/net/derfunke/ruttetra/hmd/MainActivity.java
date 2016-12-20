@@ -23,6 +23,21 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
+// JR mucking about below
+import android.os.Handler;
+import android.content.Intent;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Set;
+import java.util.UUID;
+import net.derfunke.ruttetra.hmd.sandbox.SensorPlayground;
+
+// JR mucking about above
+
 public class MainActivity extends CardboardActivity implements CardboardView.StereoRenderer, OnFrameAvailableListener {
 
     private static final String TAG = "MainActivity";
@@ -35,6 +50,21 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     private int mPositionHandle, mPositionHandle2;
     private int mColorHandle;
     private int mTextureCoordHandle;
+
+    // JR mucking about below
+    private BluetoothAdapter reBluetoothAdapter;
+    private BluetoothSocket reSocket;
+    private BluetoothDevice reDevice;
+    private OutputStream reOutputStream;
+    private InputStream reInputStream;
+    private Thread workerThread;
+    private byte[] readBuffer;
+    private int readBufferPosition;
+    private int reCounter;
+    private volatile boolean stopWorker;
+    public float hundValue;
+    public Float[] arduinoValues = {0f, 0f, 0f, 0f, 0f};
+    // JR mucking about above
 
     // number of coordinates per vertex in this array
     static final int COORDS_PER_VERTEX = 2;
@@ -172,8 +202,26 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         mCamera = new float[16];
         mView = new float[16];
 
+        // JR mucking about below
+        // is this the place to start BT stuff ?
+        boolean found = false;
+        try {
+            found = findBT();
+            // JR:  we are only opening the device if one is found !!
+            if (found) {
+                openBT();
+            }
+        }
+        catch (IOException ex) { }
+
         mOverlayView = (CardboardOverlayView)findViewById(R.id.overlay);
-        mOverlayView.presentText("HUND HUND HUND HUND HUND");
+        if (found) {
+            mOverlayView.presentText("CONNECTING TO UMWELT (via bluetooth)");
+        }
+        else {
+            mOverlayView.presentText("CONNECTING TO UMWELT");
+    }
+        // JR mucking about above
     }
 
     @Override
@@ -272,6 +320,11 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         shader.bind();
 
         shader.set("eye", eye);
+        shader.set("f0", arduinoValues[0]);
+        shader.set("f1", arduinoValues[1]);
+        shader.set("f2", arduinoValues[2]);
+        shader.set("f3", arduinoValues[3]);
+        shader.set("f4", arduinoValues[4]);
 
         mProgram = shader.getGLId();
 
@@ -321,5 +374,135 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 //        // Always give user feedback
 //        mVibrator.vibrate(50);
     }
+
+    // JR mucking about below
+
+    boolean findBT()
+    {
+        reBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if(reBluetoothAdapter == null)
+        {
+            // does this stuff below work ?
+            mOverlayView = (CardboardOverlayView)findViewById(R.id.overlay);
+            mOverlayView.presentText("no bluetooth adapter found");
+            return false;
+        }
+
+        // if(!reBluetoothAdapter.isEnabled())
+        // {
+        //     Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        //     startActivityForResult(enableBluetooth, 0);
+        // }
+
+        Set<BluetoothDevice> pairedDevices = reBluetoothAdapter.getBondedDevices();
+        if(pairedDevices.size() > 0)
+        {
+            for(BluetoothDevice device : pairedDevices)
+            {
+                // JR ridiculous hack, takes first paired device in list.
+                    reDevice = device;
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    void openBT() throws IOException
+    {
+        UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //Standard SerialPortService ID
+        reSocket = reDevice.createRfcommSocketToServiceRecord(uuid);
+        reSocket.connect();
+        reOutputStream = reSocket.getOutputStream();
+        reInputStream = reSocket.getInputStream();
+
+        beginListenForData();
+    }
+
+    void beginListenForData()
+    {
+        final Handler handler = new Handler();
+        final byte delimiter = 10; //This is the ASCII code for a newline character
+
+        stopWorker = false;
+        readBufferPosition = 0;
+        readBuffer = new byte[1024];
+        workerThread = new Thread(new Runnable()
+        {
+            public void run()
+            {
+                while(!Thread.currentThread().isInterrupted() && !stopWorker)
+                {
+                    try
+                    {
+                        int bytesAvailable = reInputStream.available();
+                        if(bytesAvailable > 0)
+                        {
+                            byte[] packetBytes = new byte[bytesAvailable];
+                            reInputStream.read(packetBytes);
+                            for(int i=0;i<bytesAvailable;i++)
+                            {
+                                byte b = packetBytes[i];
+                                if(b == delimiter)
+                                {
+                                    byte[] encodedBytes = new byte[readBufferPosition];
+                                    System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
+                                    final String data = new String(encodedBytes, "US-ASCII");
+                                    readBufferPosition = 0;
+
+                                    handler.post(new Runnable()
+                                    {
+                                        public void run()
+                                        {
+                                            // JR: need to parse data and call setter ?
+                                            // sending more than five values from the arduino means trouble...
+                                            // JR: really no idea what this handler does and can do..
+                                            // how can this runnable call SensorPlayGround stuff ???
+                                            // is anything actually ever calling those methods ?? how ???
+                                            String[] dataValues = data.split("\\s+");
+                                            int i = 0;
+                                            for (String val: dataValues) {
+                                                arduinoValues[i] = (float) Integer.parseInt(val) / 1024f;
+                                                i = i + 1;
+                                            }
+                                            // JR: it seems as if values are being updates once every five
+                                            // receives ??
+                                            // the eye value gets updated for every frame it seems
+                                            // the arduinovalues are received (overlay shows them updating as
+                                            //  expected, when printing the actual arduinoValues in the array)
+                                            // but the arduinovavlues in the array somehow do not get through
+                                            // except once every five updates ?????? very strange...
+                                            // mOverlayView = (CardboardOverlayView)findViewById(R.id.overlay);
+                                            // mOverlayView.presentText(Float.toString(((arduinoValues[0] % 1f) * 20f) % 1f));
+                                            // SensorPlayground.arduinoValues(ardValues[0], ardValues[1], ardValues[2], ardValues[3], ardValues[4]);
+                                        }
+                                    });
+                                }
+                                else
+                                {
+                                    readBuffer[readBufferPosition++] = b;
+                                }
+                            }
+                        }
+                    }
+                    catch (IOException ex)
+                    {
+                        stopWorker = true;
+                    }
+                }
+            }
+        });
+
+        workerThread.start();
+    }
+
+    // JR this never gets called, but no ill effects ?
+    void closeBT() throws IOException
+    {
+        stopWorker = true;
+        reInputStream.close();
+        reOutputStream.close();
+        reSocket.close();
+    }
+// JR mucking about above
 
 } // MainActivity
