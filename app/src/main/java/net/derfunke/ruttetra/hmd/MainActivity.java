@@ -267,10 +267,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         //Log.d("Main", "eye = "+eye);
 
         shader.bind();
-
         shader.set("eye", eye);
-
-        //sense.update();
+        sense.update();
 
         mProgram = shader.getGLId();
 

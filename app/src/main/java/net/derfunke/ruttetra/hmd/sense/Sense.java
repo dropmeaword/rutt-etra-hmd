@@ -57,4 +57,8 @@ public class Sense {
 
     } // ctor
 
+    public void update() {
+
+    }
+
 } // class Sense
